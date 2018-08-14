@@ -8,9 +8,9 @@ Hands-on com o básico de Terraform e Inspec
  - Usuário na AWS com access key e secret key
  - Terraform 0.11.3 ou superior - [Terraform](https://www.terraform.io/)
  - Inspec 2.0.17 ou superior - [Inspec for AWS](https://www.inspec.io/downloads/)
- - Inspect configurado para ler as credencias da AWS.
+ - Inspect configurado para ler as credenciais da AWS.
 
-# Set up de ambiente:
+# Set up do ambiente:
 
 ## Repositório.
 
