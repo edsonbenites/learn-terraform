@@ -2,27 +2,25 @@
 
 *Hands-on* com o básico de Terraform e Inspec
 
-# Pré-requisitos
+## Pré-requisitos
 
-## Conta na AWS
- - Usuário na AWS com access key e secret key
- - Terraform 0.11.3 ou superior - [Terraform](https://www.terraform.io/)
- - Inspec 2.0.17 ou superior - [Inspec for AWS](https://www.inspec.io/downloads/)
- - Inspec configurado para ler as credenciais da AWS.
+* Conta na AWS.
+* Usuário na AWS com access key e secret key
+* Terraform 0.11.3 ou superior - [Terraform](https://www.terraform.io/)
+* Inspec 2.0.17 ou superior - [Inspec for AWS](https://www.inspec.io/downloads/)
+* Inspec configurado para ler as credenciais da AWS.
 
-# Set up de ambiente:
+## Set up de ambiente
 
-## Repositório.
+Clonar este repositório.
 
-Clonar este repositório 
-
-```
+```bash
 git clone https://github.com/jailson-silva/learn-terraform
 ```
 
 Entrar no diretório inspec-on-aws.
 
-```
+```bash
 cd inspec-on-aws/
 ```
 
@@ -30,7 +28,7 @@ O projeto define uma configuração de duas instâncias EC2 com configurações 
 
 Para fazer isso basta criar um arquivo chamado terraform.tfvars com as seguintes informações:
 
-```
+```hcl
 aws_access_key =  “xxxxxxxxxx"
 aws_secret_key =  “xxxxxxxxxxxxxxxxxxxxxx"
 aws_region = "us-east-2"
@@ -38,22 +36,23 @@ aws_availability_zone = "a"
 ```
 
 Alterar:
+
 * aws_access_key e aws_secret_key com sua AWS access key ID e secret key.
+  
 * aws_region e aws_availability_zone com sua region e availability zone.
 
-# Criando a Infraestrutura.
+### Criando a Infraestrutura
 
 Nesta parte, vamos criar a infraestrutura na AWS usando o Terraform.
 O Terraform cria a infraestrutura na AWS, isso é feito através de um arquivo que descreve a configuração desejada. Este arquivo é geralmente chamado main.tf.
 
-```
-inspec-on-aws/main.tf
+```bash
+touch inspec-on-aws/main.tf
 ```
 
 Aqui está um diagrama da topologia de infraestrutura que iremos criar.
 
 ![Terraform Topology](./img/terraform-topology.png)
-
 
 A VPC contém duas subnets, uma para tráfego público e outra para tráfego somente na rede privada.
 
@@ -71,7 +70,7 @@ O Terraform suporta uma variedade de provedores.
 
 Iniciando o terraform:
 
-```
+```bash
 terrafom init
 ```
 
@@ -85,7 +84,7 @@ Antes de você executar o terraform apply para criar sua infraestrutura, é uma 
 
 Output do terraform plan:
 
-```
+```bash
 terraform plan
 ```
 
@@ -99,31 +98,31 @@ Output do Terraform Apply
 
 Com a infraestrutura criada e com os _outputs_ configurados podemos escrever nossos testes.
 
-# Verificando a nossa Infraestrutura
+#### Verificando a nossa Infraestrutura
 
 Iremos escrever alguns testes integração para a nossa infra utilizando o [Inspec for AWS](https://www.inspec.io/downloads/).
 
 Para isso temos que criar um profile local onde será desenvolvido nossos testes:
 
-```
+```bash
 inspec init profile aws-infra
 ```
 
 Este comando vai criar um diretorio com o nome do profile "aws-infra" e um aquivo com exemplos de alguns testes, podemos remover uma vez que não iremos utilizá-lo.
 
-```
+```bash
 rm aws-infra/controls/example.rb
 ```
 
 Agora vamos criar um novo arquivo com o nome instances.rb e adicionar os nossos testes:
 
-```
+```bash
 vim aws-infra/controls/instances.rb
 ```
 
 Agora vamos adicionar o conteúdo com os resources do inspec [Inspec Resources for AWS](https://www.inspec.io/docs/reference/resources/#aws-resources/)
 
-```
+```ruby
 describe aws_ec2_instance(name: 'webserver') do
     it { should be_running }
 end
@@ -149,7 +148,7 @@ Sendo assim, iremos utilizar o formato aws://REGION/PROFILE para especificar a o
 
 Vamos executar o inspec exec e verificar se a infraestrutura da AWS está de acordo com o desejado. Lembrando de substituir **us-east-1/terraform** pela sua região e profile da AWS.
 
-```
+```bash
 inspec exec aws-infra -t aws://us-east-2/terraform
 ```
 
@@ -167,7 +166,7 @@ No Terraform especificamos a sub-rede pública para o servidor Web e a sub-rede 
 
 Vamos atualizar nosso _control file_ e incluir os testes para verificar a AMI de cada instância, o seu tamanho e o endereço IP. Aqui está um exemplo. Substitua o ID da AMI, o ID da instância do servidor de banco de dados e o endereço IP do servidor web, lembrando estes dados podem ser coletados no console da AWS.
 
-```
+```ruby
 # Informacoes do servidor Web
 describe aws_ec2_instance(name: 'webserver') do
     it { should be_running }
@@ -195,7 +194,7 @@ Todas as instâncias precisam de uma VPC para rodar, uma VPC define uma lista de
 
 Vamos modificar nosso controle para testar a nossa VPC adicionando o seguinte código.
 
-```
+```ruby
 describe aws_vpc('vpc-0da754dd60ddfdefb') do
   its('state') { should eq 'available' }
   its('cidr_block') { should eq '10.0.0.0/16' }
@@ -204,7 +203,7 @@ end
 
 No terraform definimos uma subnet dentro do VPC, vamos testar também.
 
-```
+```ruby
 describe aws_subnet('subnet-0ac0c204bede06b2b') do
   it { should exist }
   its('vpc_id') { should eq 'vpc-0da754dd60ddfdefb' }
@@ -222,7 +221,7 @@ end
 
 Vamos testar nossos SG, porque não:
 
-```
+```ruby
 describe aws_security_group('sg-01f8db4d824b28d0b') do
   it { should exist }
 end
@@ -236,12 +235,11 @@ describe aws_security_group('sg-0e39a7eab0cb98540') do
 end
 ```
 
-
 Até agora sucesso em todos os nossos testes.
 
 ![inspec test](./img/inspec_test_3.png)
 
-# Refatorando nossos testes
+## Refatorando nossos testes
 
 Até agora tudo bem, mas podemos melhorar, ter que sempre ir no console da AWS e repassar os IDs dos recursos não é uma tarefa eficiente e toma muito tempo, seria interassante automatizá-la.
 
@@ -253,13 +251,13 @@ Ao rodar o inspec exec para executar os testes podemos utilizar o argumento _--a
 
 Primeiro vamos criar este arquivo:
 
-```
+```bash
 terraform output | sed s/=/:/g > attributes.yml
 ```
 
 Agora podemos ir no início do nosso _control file_ e definir os seguintes atributos.
 
-```
+```ruby
 webserver_name = attribute('ec2_instance.webserver.name', description: 'WebServer Name')
 database_id = attribute('ec2_instance.database', description: 'Web server ID')
 image_id = attribute('image_id', description: 'Ubuntu 16.04 AMI ID')
@@ -272,7 +270,7 @@ public_ip = attribute('ec2_instance.webserver.public_ip', description: 'Public W
 
 Agora vamos substituir primeiro o recurso aws_ec2_instance que é referente a nosso servidor web.
 
-```
+```ruby
 # Informacoes do servidor Web
 describe aws_ec2_instance(name: webserver_name) do
   it { should be_running }
@@ -286,7 +284,7 @@ end
 
 E podemos alterar outras informações pelos valores que estão nos nossos atributos:
 
-```
+```ruby
 webserver_name = attribute('ec2_instance.webserver.name', description: 'WebServer Name')
 database_id = attribute('ec2_instance.database', description: 'Web server ID')
 image_id = attribute('image_id', description: 'Ubuntu 16.04 AMI ID')
@@ -354,13 +352,13 @@ O _profile file_ é armazenado no diretório de arquivos do projeto. Um _profile
 
 Vamos criar um diretório chamado aws-infra/files.
 
-```
+```bash
 mkdir -p  aws-infra/files
 ```
 
 Após isso vamos exportar os nossos _outputs_ do terraform porém destá vez no formato json.
 
-```
+```bash
 terraform output --json > aws-infra/files/terraform.json
 ```
 
@@ -368,7 +366,7 @@ Agora temos que modificar nosso _control file_ para carregar as informações do
 
 O código abaixo é um ruby que faz um parser do terraform.json.
 
-```
+```bash
 content = inspec.profile.file("terraform.json")
 params = JSON.parse(content)
 
@@ -388,7 +386,7 @@ Agora podemos alterar os ids dos recursos pelas suas respectivas variáveis.
 
 Exemplo:
 
-```
+```ruby
 describe aws_ec2_instance(name: webserver_name) do
   it { should be_running }
   its('image_id') { should eq image_id }
@@ -401,7 +399,7 @@ end
 
 Depois só rodar os testes novamente, porém agora não precisaremos passar o arqumento _—-attrs_.
 
-```
+```bash
 inspec exec aws-infra -t aws://us-east-2/terraform
 ```
 
@@ -411,7 +409,7 @@ Vamos aproveitar agora e alterar todos os outros testes, ao inves de IDs passare
 
 O arquivo final será bem parecido com o código abaixo:
 
-```
+```ruby
 # copyright: 2018, The Authors
 
 title 'Teste EC2'
@@ -450,9 +448,8 @@ end
 
 E como valorizamos um código bem escrito, vamos rodar o _rubocop_ e verificar se temos alguma ofensa.
 
-```
+```bash
 rubocop .
 ```
 
 ![rubocot](./img/rubocop.png)
-
