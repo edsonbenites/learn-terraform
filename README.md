@@ -26,7 +26,7 @@ Entrar no diretório inspec-on-aws.
 cd inspec-on-aws/
 ```
 
-O projeto define uma configuração de duas instâncias EC2 e suas configurações de segurança e rede relacionadas. Vamos precisar criar um arquivo que especifique como acessar a conta da AWS.
+O projeto define uma configuração de duas instâncias EC2 com configurações de segurança e rede relacionadas. Vamos precisar criar um arquivo de configuração para acessar a conta na AWS.
 
 Para fazer isso basta criar um arquivo chamado terraform.tfvars com as seguintes informações:
 
@@ -448,7 +448,7 @@ describe aws_ec2_instance(database_id) do
 end
 ```
 
-E como valorizamos um codigo bem escrito, vamos rodar o rubocop e verificar se temos alguma ofensa que temos de acertar.
+E como valorizamos um código bem escrito, vamos rodar o _rubocop_ e verificar se temos alguma ofensa.
 
 ```
 rubocop .
